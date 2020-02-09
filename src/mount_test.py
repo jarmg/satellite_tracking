@@ -1,45 +1,44 @@
-import mount_control as tc
+import mount as mt
 import pytest
 import time
 
-def test_move():
-    m = tc.GoToMount() 
-    
+
 def test_position():
-    m = tc.GoToMount()
+    m = mt.GoToMount()
     a = m.position
     print(a)
 
-def test_get_steps_per_rev():
-    m = tc.GoToMount()
-    a = m.steps_per_rev
+
+def test_get_steps_per_deg():
+    m = mt.GoToMount()
+    a = m.steps_per_deg
     print(a)
 
+
 def test_move():
-    m = tc.GoToMount()
-    a = m.steps_per_rev
-    m.move(int(a[0]/2), 1)
+    m = mt.GoToMount()
+    m.move_relative(val=20, axis=m.RA_CHANNEL, use_degrees=True)
     assert m.is_moving
-    m.stop(1)
+    m.stop(m.RA_CHANNEL)
     time.sleep(.1) 
     assert not m.is_moving
 
-    print(a)
 
 def test_get_stats():
-    m = tc.GoToMount()
+    m = mt.GoToMount()
     print(m.is_moving)
+
 
 @pytest.mark.skip(reason="only when debugging position")
 def test_position_change():
-    m = tc.GoToMount()
+    m = mt.GoToMount()
     m.move(0, 1)
     m._stream_position(10)
     m.stop(1)
 
 
 def test_value_decode():
-    m = tc.GoToMount()
+    m = mt.GoToMount()
 
     out = 8120368
     inp = b'30E87B'
@@ -49,7 +48,7 @@ def test_value_decode():
 
 
 def test_value_encode():
-    m = tc.GoToMount()
+    m = mt.GoToMount()
     inp = 8120368
     out = '30E87B'
 
@@ -58,7 +57,7 @@ def test_value_encode():
 
 
 def test_target_setting():
-    m = tc.GoToMount()
+    m = mt.GoToMount()
     target = 41276
     m._set_move_target(target=target, axis=m.RA_CHANNEL)
     ra, dec = m.target
@@ -66,7 +65,10 @@ def test_target_setting():
 
 
 def test_relative_movement():
-    m = tc.GoToMount()
-    target = 20 #degrees
+    m = mt.GoToMount()
+    target = 10  # degrees
     m.move_relative(val=target, axis=m.DEC_CHANNEL, use_degrees=True)
+    while m.is_moving:
+        time.sleep(.1)
+    m.move_relative(val=-target, axis=m.DEC_CHANNEL, use_degrees=True)
 
