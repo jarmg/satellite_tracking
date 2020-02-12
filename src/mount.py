@@ -23,7 +23,9 @@ class GoToMount:
         'start_motion': ':J{axis}\r',
         'stop_motion': ':K{axis}\r',
         'set_motion_mode': ':G{axis}{motion_type}{motion_orientation}\r',
-        'set_goto_target': ':S{axis}{target}\r'
+        'set_goto_target': ':S{axis}{target}\r',
+        'aux_on': ':O1{axis}\r',
+        'aux_off': 'O0{axis}\r'
     }
 
     def __init__(self, ip_address="192.168.0.17", port=11880):
@@ -159,6 +161,11 @@ class GoToMount:
         pos += delta
         self.move(int(pos), axis=axis)
         
+    def shutter_on(self, axis):
+        self._send_and_receive(self.CMDS['aux_on'].format(axis=axis))
+
+    def shutter_off(self, axis):
+        self._send_and_receive(self.CMDS['aux_off'].format(axis=axis))
 
 
 
