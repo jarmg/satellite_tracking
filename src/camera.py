@@ -4,6 +4,10 @@ import logging
 import os
 import subprocess
 
+from skyfield.api import load
+ts = load.timescale()
+
+
 ip_address = "192.168.0.17"
 serial_port = 11880
 
@@ -81,12 +85,17 @@ class SatelliteTracker:
             exposure: length of the exposure
         '''
         self.move_to(ra, dec)
-        begin = t - margin
-        end = t + margin
-        imgs = (end - begin) / exposure
-        while begin > time.time():
+
+        # build the observation window (interesting:https://bit.ly/2Wz5YwC)
+        mg_dt = margin / 24 / 60 / 60
+        expsr = margin / 24 / 60 / 60
+
+        begin = ts.tt_jd(t.tt - mg_dt)
+        end = ts.tt_jd(t.tt + mg_dt)
+        imgs = int((end.tt - begin.tt) / expsr)
+        while begin.tt > ts.now().tt:
             print("starting exposure of {ra}, {dec} in T-{t_minus} seconds".format(
-                ra=ra, dec=dec, t_minus=(begin - time.time())))
+                ra=ra, dec=dec, t_minus=((begin.tt - ts.now().tt)) * 60 * 60 * 24))
             time.sleep(1)
         self.take_pictures(output_dir, exposure, imgs)
         print("done taking images")

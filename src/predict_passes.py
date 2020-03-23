@@ -46,10 +46,10 @@ def get_upcoming_passes(location, t0, t1, tle_file=None, cache=False):
 def main():
     ts = time_loader.timescale(builtin=True)
     location = Topos('47.647654 N', '-122.324748 W')
-    t0 = ts.utc(2020, 2, 22)
-    t1 = ts.utc(2020, 2, 25)
+    t0 = ts.utc(2020, 3, 21)
+    t1 = ts.utc(2020, 3, 25)
 
-    return get_upcoming_passes(location, t0, t1, cache=True, tle_file='starlink.txt')
+    return get_upcoming_passes(location, t0, t1, cache=True, tle_file=None)
 
     #sats = get_satellites()
     #passes = _get_passes_for_sat(list(sats.values())[0], location, t0, t1)
