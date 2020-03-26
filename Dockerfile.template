@@ -35,7 +35,7 @@ RUN apt-get install -yq --no-install-recommends \
   rm -rf /var/lib/apt/lists/*
 
 RUN curl https://github.com/balena-io/wifi-connect/releases/download/v4.2.13/wifi-connect-v4.2.13-linux-aarch64.tar.gz -L | \
-  tar xvz -C /user/src/app
+  tar xvz -C /usr/src/app
 
 # This will copy all files in our root to the working  directory in the container
 COPY . ./

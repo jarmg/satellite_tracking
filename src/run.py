@@ -1,5 +1,6 @@
 import pickle
 import time
+import os
 
 from skyfield.api import Loader
 
@@ -7,24 +8,31 @@ from camera import SatelliteTracker
 
 load = Loader('./data/')
 
+ROOT_DIR = os.environ['ROOT_DIR']
+DATA_DIR = os.path.join(ROOT_DIR, 'data') 
 
-def jog():
+
+def run_jog(mount):
+    print("Welcoming to the jogging interface!")
+    print("Use this to position the camera in a known \
+            orientation for calibration")
     while True:
-        d = input("enter direction to jog [WASD]: ").lower()
-        v = int(input("enter steps to jog (int): "))
-        if d == 'w':
-            print("move up {}".format(v))
-        elif d == 's':
-            print("move down {}".format(v))
-        elif d == 'd':
-            print("move right")
-        elif d == 'a':
-            print("move left")
-        elif d == 'x':
-            print("exit")
-            return 
+        d = input("enter axis [a, e] or any other key to exit: ").lower()
+        if d in 'ae':
+            try:
+                v = int(input("enter steps to jog (int): "))
+            except ValueError:
+                print("not a valid int")
+                continue
         else:
-            print(d)
+            print("jogging complete - hope you had fun!")
+            return
+        if d == 'a':
+            axis = mount.RA_CHANNEL 
+        elif d == 'e':
+            axis = mount.DEC_CHANNEL
+        mount.move_relative(axis=axis, value=v, use_degrees=False)
+        
           
 
 def run_observations(camera, passes, time_scale, mock):
@@ -63,26 +71,26 @@ def observe(sat, camera, mock):
 
 def main(mock=False):
     ts = load.timescale()
-    passes = pickle.load(open('passes.pkl', 'rb'))
+    passes = pickle.load(open(os.path.join(DATA_DIR, 'passes.pkl'), 'rb'))
     camera = SatelliteTracker()
 
-    #import pdb; pdb.set_trace()
-    print("Calibrate position")
+    # TODO jarmg: change to a camera init
+    if not mock:
+        camera.mount_init()
 
+    print("Calibrate position")
     do_jog = input("Need to jog? (y/n): ")
     if do_jog == 'y':
-        jog()
+        run_jog(camera.mount)
     elif do_jog == 'n':
         pass
     else:
-        print("Invlid input")
+        print("Invalid input")
         exit(1)
 
-    ra = float(input("Please enter current RA: "))
-    dec = float(input("Please enter current dec: "))
-
     if not mock:
-        camera.mount_init()
+        ra = float(input("Please enter current RA: "))
+        dec = float(input("Please enter current dec: "))
         camera.calibrate(ra, dec)
         
     run_observations(camera, passes, ts, mock)

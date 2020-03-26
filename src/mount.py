@@ -6,6 +6,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Motorcontroller: https://indilib.org/media/kunena/attachments/4026/SkywatcherMotorControllerCommandSet.pdf
 
+
 class GoToMount:
 
     RA_CHANNEL = 1
@@ -28,7 +29,7 @@ class GoToMount:
         'aux_off': 'O0{axis}\r'
     }
 
-    def __init__(self, ip_address="192.168.0.17", port=11880):
+    def __init__(self, ip_address="ESP_6DAE10", port=11880):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._ip_address = ip_address
         self._port = port
@@ -43,7 +44,6 @@ class GoToMount:
         return ret[1:-1]  # strip '=' and '\r'
 
     def _stream_position(self, seconds):
-        import time
         start = time.time()
         while (time.time() < start + seconds):
             ra = self._send_and_receive(
@@ -54,9 +54,9 @@ class GoToMount:
     def _encode(self, val, is_position=False):
         '0xABCDEF -> 0xEFCDAB'
         # Build byte array
-    
+
+        # position values have an offset of 0x800000 
         if is_position:
-            # 0x800000 offset
             val += 0x800000
 
         hx = val.to_bytes(3, byteorder='big').hex().upper()
@@ -78,8 +78,8 @@ class GoToMount:
         # Convert back to int
         h = int(''.join(b), base=16)
 
+        # apply offset if position 
         if is_position:
-            # apply offset and return
             return h - 0x800000
 
         return h
@@ -147,13 +147,13 @@ class GoToMount:
         self._send_and_receive(
                 self.CMDS['start_motion'].format(axis=axis))
 
-    def move_relative(self, val, axis, use_degrees=True):
-        logging.debug("relative movement value:{}, axis:{}".format(val, axis))
-        delta = val
+    def move_relative(self, value, axis, use_degrees=True):
+        logging.debug("relative movement value:{}, axis:{}".format(value, axis))
+        delta = value
         ax_idx = axis - 1
         if use_degrees:
             steps_per_deg = self.steps_per_deg[ax_idx]
-            delta = steps_per_deg * val 
+            delta = steps_per_deg * value
 
         logging.debug("delta value:{}".format(delta))
         logging.debug("steps per deg:{}".format(self.steps_per_deg))
@@ -161,9 +161,11 @@ class GoToMount:
         pos += delta
         self.move(int(pos), axis=axis)
         
+    # Not used (couldn't get this to work)
     def shutter_on(self, axis):
         self._send_and_receive(self.CMDS['aux_on'].format(axis=axis))
 
+    # Not used (couldn't get this to work)
     def shutter_off(self, axis):
         self._send_and_receive(self.CMDS['aux_off'].format(axis=axis))
 
