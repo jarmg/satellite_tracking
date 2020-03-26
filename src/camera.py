@@ -8,7 +8,7 @@ from skyfield.api import load
 ts = load.timescale()
 
 
-hostname = "ESP_6DAE10"
+hostname = "ESP_6DAE10.home"
 serial_port = 11880
 
 
@@ -73,7 +73,7 @@ class SatelliteTracker:
     def take_pictures(self, file_path, exposure, count):
         print("capturing image")
         ret = subprocess.run([
-            os.join(self.util_dir, "capture_images.sh"),
+            os.path.join(self.util_dir, "capture_images.sh"),
             str(count),
             str(exposure),
             file_path
