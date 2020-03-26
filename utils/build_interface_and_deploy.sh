@@ -1,6 +1,6 @@
 #!/bin/bash
 
 cd frontend
-npm build 
+npm run-script build 
 cd ../
 balena push satellite_imager
