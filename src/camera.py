@@ -15,7 +15,7 @@ serial_port = 11880
 class SatelliteTracker:
     def __init__(self):
         self.root_dir = os.environ['ROOT_DIR']
-        self.util_dir = os.path.join(self.root_dir + 'utils')
+        self.util_dir = os.path.join(self.root_dir, 'utils')
         self.mount = None
         self._zero_ra_pos = None
         self._zero_dec_pos = None
@@ -96,21 +96,10 @@ class SatelliteTracker:
         end = ts.tt_jd(t.tt + mg_dt)
         imgs = int((end.tt - begin.tt) / expsr)
         while begin.tt > ts.now().tt:
-            print("starting exposure of {ra}, {dec} in T-{t_minus} seconds at time {tt}".format(
-                ra=ra, dec=dec, t_minus=((begin.tt - ts.now().tt)) * 60 * 60 * 24), begin.tt)
+            sec_until = (begin.tt - ts.now().tt) * 60 * 60 * 24
+            start = begin.utc_strftime('%X')
+            print("exposure of {ra}, {dec} in T-{t_m} secs at {start}"
+                    .format(ra=ra, dec=dec, t_m=sec_until, start=start))
             time.sleep(1)
         self.take_pictures(output_dir, exposure, imgs)
         print("done taking images")
-
-
-
-
-
-
-
-        
-
-        
-
-
-

@@ -47,8 +47,10 @@ def get_upcoming_passes(location, t0, t1, tle_file=None, cache=False):
 def main():
     ts = time_loader.timescale(builtin=True)
     location = Topos('47.647654 N', '-122.324748 W')
-    t0 = ts.utc(2020, 3, 21)
-    t1 = ts.utc(2020, 3, 25)
+    t0 = ts.now()
+    end = list(t0.utc)
+    end[2] += 2  # forecast 2 days forward
+    t1 = ts.utc(*end)
 
     return get_upcoming_passes(location, t0, t1, cache=True, tle_file=None)
 
