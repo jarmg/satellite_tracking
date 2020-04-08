@@ -1,15 +1,20 @@
-from mount import GoToMount
 import time
 import logging
 import os
 import subprocess
 
 from skyfield.api import load
+
+from mount import GoToMount
+from predict_passes import get_moon_pos
+
 ts = load.timescale()
 
 
 hostname = "ESP_6DAE10.home"
 serial_port = 11880
+
+
 
 
 class SatelliteTracker:
@@ -21,6 +26,15 @@ class SatelliteTracker:
         self._zero_dec_pos = None
         self._ra_steps_per_deg = None
         self._dec_steps_per_deg = None
+        self._is_calibrated = False
+ 
+    def requires_calibration(func):
+        def check_calibration(*args, **kwargs):
+            self = args[0]
+            if self._is_calibrated:
+                func(args, kwargs)
+            else:
+                raise ValueError("Camera is not calibrate")       
 
     def mount_init(self, ip=hostname, port=serial_port):
         self.mount = GoToMount(ip_address=ip, port=port)
@@ -48,12 +62,14 @@ class SatelliteTracker:
         ra_pos, dec_pos = self.mount.position
         self._zero_ra_pos = ra_pos - (self.mount.steps_per_deg[0] * ra)
         self._zero_dec_pos = dec_pos - (self.mount.steps_per_deg[1] * dec)
+        self._is_calibrated = True
 
     def wait_for_move(self):
         while self.mount.is_moving:
             time.sleep(.1)
         return
 
+    @requires_calibration
     def move_to(self, ra, dec):
         '''blocks on movement'''
         ra = self._ra_to_steps(ra)
@@ -66,9 +82,9 @@ class SatelliteTracker:
 
     def move_relative(self, ra=None, dec=None):
         if ra:
-            self.mount.move_relative(val=ra, axis=self.mount.RA_CHANNEL)
+            self.mount.move_relative(value=ra, axis=self.mount.RA_CHANNEL)
         if dec:
-            self.mount.move_relative(val=dec, axis=self.mount.DEC_CHANNEL)
+            self.mount.move_relative(value=dec, axis=self.mount.DEC_CHANNEL)
 
     def take_pictures(self, file_path, exposure, count):
         print("capturing image")
@@ -79,10 +95,16 @@ class SatelliteTracker:
             file_path
         ])
         print("return of {}".format(ret))
+        return file_path
 
+    @requires_calibration
+    def move_to_moon(camera):
+        el, az, _ = get_moon_pos()
+
+    @requires_calibration
     def move_to_then_shoot(self, ra, dec, t, margin, exposure, output_dir):
         '''
-            time: expected time of event (gps)
+            t: expected time of event
             margin: buffer before and after event to image to increase our odds
             exposure: length of the exposure
         '''
@@ -99,7 +121,10 @@ class SatelliteTracker:
             sec_until = (begin.tt - ts.now().tt) * 60 * 60 * 24
             start = begin.utc_strftime('%X')
             print("exposure of {ra}, {dec} in T-{t_m} secs at {start}"
-                    .format(ra=ra, dec=dec, t_m=sec_until, start=start))
+                  .format(ra=ra, dec=dec, t_m=sec_until, start=start))
             time.sleep(1)
         self.take_pictures(output_dir, exposure, imgs)
         print("done taking images")
+
+    def move_to_moon():
+        el, az, _ = get_moon_pos()

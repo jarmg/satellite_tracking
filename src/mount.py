@@ -33,12 +33,26 @@ class GoToMount:
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._ip_address = ip_address
         self._port = port
-        self._socket.settimeout(30)
+        self._socket.settimeout(5)
 
     def _send_and_receive(self, msg):
         logging.debug("sending msg'{}".format(repr(msg)))
-        self._socket.sendto(bytes(msg, encoding='ascii'), (self._ip_address, self._port))
-        ret = self._socket.recvfrom(1024)[0]
+        retry = True
+        retry_count = 0
+        retry_max = 20
+        while(retry):
+            try:
+                self._socket.sendto(bytes(msg, encoding='ascii'), (self._ip_address, self._port))
+                ret = self._socket.recvfrom(1024)[0]
+                retry = False
+            except socket.timeout:
+                print("retry # {}".format(retry_count))
+                retry_count += 1
+                if retry_count < retry_max:
+                    retry = True
+                else:
+                    raise socket.timeout
+
         if b"!" in ret:
             raise ValueError('Motor controller error: {}'.format(ret))
         return ret[1:-1]  # strip '=' and '\r'

@@ -1,10 +1,24 @@
 import os
+import sys
 import pickle
 
 from skyfield.api import Topos, load, Loader
 
-time_loader = Loader('./data/')
 ROOT_DIR = os.environ['ROOT_DIR']
+
+time_loader = Loader('./data/')
+ts = time_loader.timescale(builtin=True)
+planets = load('de421.bsp')
+
+def get_moon_pos():
+    earth = planets['earth']
+    moon = planets['moon']
+
+    # Jared's home
+    loc = earth + Topos('47.647654 N', '-122.324748 E')
+    apparent = loc.at(ts.now()).observe(moon).apparent()
+    return apparent.altaz()
+
 
 
 def get_satellites(tle_file=None):
@@ -44,9 +58,11 @@ def get_upcoming_passes(location, t0, t1, tle_file=None, cache=False):
     return passes
 
 
-def main():
-    ts = time_loader.timescale(builtin=True)
-    location = Topos('47.647654 N', '-122.324748 W')
+def predict_passes(lat, lon):
+    # get observer location
+    location = Topos(lat + ' N', lon + 'W')
+
+    # build time range for predictions
     t0 = ts.now()
     end = list(t0.utc)
     end[2] += 2  # forecast 2 days forward
@@ -56,4 +72,8 @@ def main():
 
 
 if __name__ == "__main__":
-    (main())
+    lat = sys.argv[1]
+    lon = sys.argv[2]
+    if lat in None or lon is None:
+        raise ValueError("Invlaid lat lon!")
+    predict_passes()

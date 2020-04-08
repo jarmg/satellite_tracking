@@ -1,3 +1,5 @@
 Flask==0.12.3
 pyusb
 skyfield
+pytz
+flask-cors
