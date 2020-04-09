@@ -16,7 +16,7 @@ ROOT_DIR = os.environ['ROOT_DIR']
 IMAGE_DIR = os.environ['IMAGE_OUTPUT_DIR']
 DATA_DIR = os.path.join(ROOT_DIR, 'data')                                  
 
-session =  Runner(mock=False)
+session = Runner(mock=True)
 
 
 def get_timestamp(tt):

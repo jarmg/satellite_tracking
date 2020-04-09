@@ -1,36 +1,74 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
 import { ImageViewer } from './components/ImageViewer.jsx';
 import { PassSchedule } from './components/Schedule.jsx';
 import { Controls } from './components/Controls.jsx';
 
-const bodyContainer = {
+const rootContainer = {
+  height: '100vh',
   display: "grid",
-  gridTemplateColumns: "25% 50% 25%"
+  gridTemplateColumns: "150px 1fr",
+  gridTemplateRows: "150px 1fr 50px",
+  gridGap: "10px",
+  gridTemplateAreas: `
+        "head head"
+        "nav main"
+        "nav footer"`,
 }
 
-function App() {
-  return (
-    <div className="App">
-      <header className="Satellite Camera Interface">
-        <p>My Token = {window.token}</p>
-      </header>
-      <body style={bodyContainer}>
-        <div>
-          <ImageViewer />
-        </div>
+const mainPanel = {
+  background: 'grey',
+  gridArea: 'main',
+}
 
-        <div>
-          <PassSchedule />
-        </div>
+const navPanel = {
+  background: 'purple',
+  gridArea: 'nav',
+}
 
-        <div>
-          <Controls />
+const headerPanel = {
+  background: 'pink',
+  gridArea: 'head',
+}
+
+const footerPanel = {
+  background: 'blue',
+  gridArea: 'footer',
+}
+
+class App extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      main_screen: 'control'
+    }
+  }
+  
+  pickScreen = () => {
+    switch(this.state.main_screen){
+      case 'control':
+        return <Controls />;
+      case 'upcoming_passes':
+        return <PassSchedule />;
+      case 'images':
+        return <ImageViewer/>;
+    }}
+
+
+  render(){
+    return (
+      <div style={rootContainer} className="App">
+        <div style={headerPanel}>
         </div>
-      </body>
-    </div>
-  );
+        <div style={mainPanel}>
+          {this.pickScreen()}
+        </div>
+        <div style={navPanel}>
+        </div>
+        <div style={footerPanel}>
+        </div>
+      </div>
+   );
+  }
 }
 
 export default App;
