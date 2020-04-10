@@ -3,6 +3,8 @@ import { ImageViewer } from './components/ImageViewer.jsx';
 import { PassSchedule } from './components/Schedule.jsx';
 import { Controls } from './components/Controls.jsx';
 
+import 'rsuite/lib/styles/index.less';
+
 const rootContainer = {
   height: '100vh',
   display: "grid",

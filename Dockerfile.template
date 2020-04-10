@@ -46,9 +46,8 @@ COPY ./server ./server
 ENV UDEV=1
 ENV ROOT_DIR=/usr/src/app
 ENV IMAGE_OUTPUT_DIR=/usr/src/app/server/static/observations
+ENV HEALTH=/usr/src/app/src/.health
 
-# Why is this broken?
-COPY ./server/static/react ./server/static/react
 
 # main.py will run when container starts up on the device
 CMD ["/bin/bash"]

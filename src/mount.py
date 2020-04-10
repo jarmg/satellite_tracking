@@ -29,6 +29,7 @@ class GoToMount:
         'aux_off': 'O0{axis}\r'
     }
 
+    # TODO: May need to lock this if we see issues between client requests
     def __init__(self, ip_address="ESP_6DAE10", port=11880):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._ip_address = ip_address

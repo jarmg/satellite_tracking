@@ -11,10 +11,9 @@ from predict_passes import get_moon_pos
 ts = load.timescale()
 
 
-hostname = "ESP_6DAE10.home"
+#hostname = "ESP_6DAE10.home"
+hostname = "192.168.0.17"
 serial_port = 11880
-
-
 
 
 class SatelliteTracker:
@@ -22,16 +21,17 @@ class SatelliteTracker:
         self.root_dir = os.environ['ROOT_DIR']
         self.util_dir = os.path.join(self.root_dir, 'utils')
         self.mount = None
-        self._zero_ra_pos = None
-        self._zero_dec_pos = None
+        self._zero_az_pos = None
+        self._zero_el_pos = None
         self._ra_steps_per_deg = None
         self._dec_steps_per_deg = None
-        self._is_calibrated = False
+        self.is_calibrated = False
  
     def requires_calibration(func):
         def check_calibration(*args, **kwargs):
+            print("move_calib")
             self = args[0]
-            if self._is_calibrated:
+            if self.is_calibrated:
                 func(args, kwargs)
             else:
                 raise ValueError("Camera is not calibrate")       
@@ -42,34 +42,33 @@ class SatelliteTracker:
             self.mount.steps_per_deg
 
     def _ra_to_steps(self, ra):
-        return int(self._zero_ra_pos + (ra * self._ra_steps_per_deg))
+        return int(self._zero_az_pos + (ra * self._ra_steps_per_deg))
 
     def _dec_to_steps(self, dec):
-        return int(self._zero_dec_pos + (dec * self._dec_steps_per_deg))
+        return int(self._zero_el_pos + (dec * self._dec_steps_per_deg))
 
     @property
-    def ra(self):
+    def az(self):
         ra_step_pos, _ = self.mount.position
-        return (ra_step_pos - self._zero_ra_pos)/self._ra_steps_per_deg
+        return (ra_step_pos - self._zero_az_pos)/self._ra_steps_per_deg
 
     @property
-    def dec(self):
-        dec_step_pos, _ = self.mount.position
-        return (dec_step_pos - self._zero_dec_pos)/self._dec_steps_per_deg
+    def el(self):
+        _, el_step_pos = self.mount.position
+        return (el_step_pos - self._zero_el_pos)/self._dec_steps_per_deg
 
-    def calibrate(self, ra, dec):
+    def calibrate(self, az, el):
         '''Given a known RA and DEC, set a baseline position'''
-        ra_pos, dec_pos = self.mount.position
-        self._zero_ra_pos = ra_pos - (self.mount.steps_per_deg[0] * ra)
-        self._zero_dec_pos = dec_pos - (self.mount.steps_per_deg[1] * dec)
-        self._is_calibrated = True
+        az_pos, el_pos = self.mount.position
+        self._zero_az_pos = az_pos - (self.mount.steps_per_deg[0] * az)
+        self._zero_el_pos = el_pos - (self.mount.steps_per_deg[1] * el)
+        self.is_calibrated = True
 
     def wait_for_move(self):
         while self.mount.is_moving:
             time.sleep(.1)
         return
 
-    @requires_calibration
     def move_to(self, ra, dec):
         '''blocks on movement'''
         ra = self._ra_to_steps(ra)
@@ -97,19 +96,17 @@ class SatelliteTracker:
         print("return of {}".format(ret))
         return file_path
 
-    @requires_calibration
     def move_to_moon(camera):
         el, az, _ = get_moon_pos()
 
-    @requires_calibration
     def move_to_then_shoot(self, ra, dec, t, margin, exposure, output_dir):
         '''
             t: expected time of event
             margin: buffer before and after event to image to increase our odds
             exposure: length of the exposure
         '''
+        
         self.move_to(ra, dec)
-
         # build the observation window (interesting:https://bit.ly/2Wz5YwC)
         mg_dt = margin / 24 / 60 / 60
         expsr = margin / 24 / 60 / 60

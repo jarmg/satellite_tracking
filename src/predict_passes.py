@@ -19,8 +19,6 @@ def get_moon_pos():
     apparent = loc.at(ts.now()).observe(moon).apparent()
     return apparent.altaz()
 
-
-
 def get_satellites(tle_file=None):
     if tle_file:
         satellites = load.tle(tle_file)
@@ -45,7 +43,7 @@ def _get_passes_for_sat(satellite, location, t0, t1):
     return ret
 
 
-def get_upcoming_passes(location, t0, t1, tle_file=None, cache=False):
+def get_upcoming_passes(location, t0, t1, cache=False, tle_file=None):
     sats = get_satellites(tle_file)
     passes = []
     for sat in list(sats.values()):
@@ -58,22 +56,20 @@ def get_upcoming_passes(location, t0, t1, tle_file=None, cache=False):
     return passes
 
 
-def predict_passes(lat, lon):
+def predict_passes(lat, lon, cache):
     # get observer location
-    location = Topos(lat + ' N', lon + 'W')
+    location = Topos(lat + ' N', lon + 'E')
 
     # build time range for predictions
     t0 = ts.now()
     end = list(t0.utc)
-    end[2] += 2  # forecast 2 days forward
+    end[2] += 1  # forecast 1 day forward
     t1 = ts.utc(*end)
 
-    return get_upcoming_passes(location, t0, t1, cache=True, tle_file=None)
+    return get_upcoming_passes(location, t0, t1, cache, tle_file=None)
 
 
 if __name__ == "__main__":
-    lat = sys.argv[1]
-    lon = sys.argv[2]
-    if lat in None or lon is None:
-        raise ValueError("Invlaid lat lon!")
-    predict_passes()
+    lat = '47.647654'
+    lon = '-122.324748' 
+    predict_passes(lat, lon)

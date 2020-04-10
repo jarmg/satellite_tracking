@@ -5,9 +5,10 @@ import os
 import pickle
 from datetime import datetime
 from pytz import timezone
+
+
 import predict_passes as predict
-from run import Runner 
- 
+from robot import Robot 
 
 app = Flask("__main__")
 CORS(app)
@@ -16,7 +17,7 @@ ROOT_DIR = os.environ['ROOT_DIR']
 IMAGE_DIR = os.environ['IMAGE_OUTPUT_DIR']
 DATA_DIR = os.path.join(ROOT_DIR, 'data')                                  
 
-session = Runner(mock=True)
+robot = Robot() # Singleton for the system
 
 
 def get_timestamp(tt):
@@ -65,12 +66,19 @@ def get_observation_file_list():
 def show_status():
     pass
 
+
 @app.route('/jog')
 def jog():
     az = int(request.args.get('azimuth'))
     el = int(request.args.get('elevation'))
     print("Jogging: az={}, el={}".format(az, el))
-    return session.sat_tracker.move_relative(ra=az, dec=el)
+    return robot.tracker.move_relative(ra=az, dec=el)
+
+
+@app.route('/run')
+def run():
+    robot.calibrate(0, 0) # FIX THIS
+    robot.start_session()
 
 
 @app.route('/upcoming_passes')
@@ -78,15 +86,8 @@ def get_upcoming_passes():
     '''pass data structured in the following tuple:
         (SAT_NAME, time, (el, az, rng))
     '''
-    now_utc = datetime.now(timezone('UTC'))
-
-    def is_upcoming(p):
-        return p[1].utc_datetime() > now_utc
-
-    passes = pickle.load(open(os.path.join(DATA_DIR, 'passes.pkl'), 'rb'))
-    upcoming_passes = filter(is_upcoming, passes)
     return Response(
-            format_passes_as_json(upcoming_passes),
+            format_passes_as_json(robot.session.passes),
             mimetype='application/json')
 
 

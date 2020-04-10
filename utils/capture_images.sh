@@ -10,15 +10,15 @@ EXPOSURE=$2
 
 # path
 IMAGE_PATH=$3
+FILE_NAME=$4
 
-mkdir $IMAGE_PATH
-cd $IMAGE_PATH
+mkdir -p $IMAGE_PATH
 
 for COUNT in `seq 1 $NUMBER`
 do
   gphoto2 \
-  --filename "%y%m%d-%H%M%S-$COUNT.CR2" \
-  --wait-event=2s \
+  --filename "$FILE_NAME-$COUNT.CR2" \
+  --wait-event=1s \
   --set-config eosremoterelease=5 \
   --wait-event=${EXPOSURE}s \
   --set-config eosremoterelease=11 \
