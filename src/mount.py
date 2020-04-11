@@ -43,7 +43,8 @@ class GoToMount:
         retry_max = 20
         while(retry):
             try:
-                self._socket.sendto(bytes(msg, encoding='ascii'), (self._ip_address, self._port))
+                self._socket.sendto(
+                    bytes(msg, encoding='ascii'), (self._ip_address, self._port))
                 ret = self._socket.recvfrom(1024)[0]
                 retry = False
             except socket.timeout:
@@ -62,7 +63,7 @@ class GoToMount:
         start = time.time()
         while (time.time() < start + seconds):
             ra = self._send_and_receive(
-                    self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
+                self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
             val = self._decode(ra, is_position=True)
             print("raw: {ra}, decoded: {val}".format(ra=ra, val=val))
 
@@ -70,14 +71,14 @@ class GoToMount:
         '0xABCDEF -> 0xEFCDAB'
         # Build byte array
 
-        # position values have an offset of 0x800000 
+        # position values have an offset of 0x800000
         if is_position:
             val += 0x800000
 
         hx = val.to_bytes(3, byteorder='big').hex().upper()
 
         # Reorder bytes
-        order = [4, 5, 2, 3, 0, 1] 
+        order = [4, 5, 2, 3, 0, 1]
         bv = [hx[i] for i in order]
         return ''.join(bv)
 
@@ -87,13 +88,13 @@ class GoToMount:
         v = val.decode()
 
         # Reorder
-        order = [4, 5, 2, 3, 0, 1] 
+        order = [4, 5, 2, 3, 0, 1]
         b = [v[i] for i in order]
 
         # Convert back to int
         h = int(''.join(b), base=16)
 
-        # apply offset if position 
+        # apply offset if position
         if is_position:
             return h - 0x800000
 
@@ -102,21 +103,21 @@ class GoToMount:
     @property
     def target(self):
         ra = self._decode(self._send_and_receive(
-                self.CMDS['get_goto_target'].format(axis=self.RA_CHANNEL)),
-                is_position=True
-            )
+            self.CMDS['get_goto_target'].format(axis=self.RA_CHANNEL)),
+            is_position=True
+        )
         dec = self._decode(self._send_and_receive(
-                self.CMDS['get_goto_target'].format(axis=self.DEC_CHANNEL)),
-                is_position=True
-            )
+            self.CMDS['get_goto_target'].format(axis=self.DEC_CHANNEL)),
+            is_position=True
+        )
         return(ra, dec)
 
     @property
     def position(self):
         ra = self._send_and_receive(
-                self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
+            self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
         dec = self._send_and_receive(
-                self.CMDS['get_position'].format(axis=self.DEC_CHANNEL))
+            self.CMDS['get_position'].format(axis=self.DEC_CHANNEL))
         ra_value = self._decode(ra, is_position=True)
         dec_value = self._decode(dec, is_position=True)
         return(ra_value, dec_value)
@@ -124,9 +125,9 @@ class GoToMount:
     @property
     def is_moving(self):
         ra = self._send_and_receive(
-                self.CMDS['get_status'].format(axis=self.RA_CHANNEL))
+            self.CMDS['get_status'].format(axis=self.RA_CHANNEL))
         dec = self._send_and_receive(
-                self.CMDS['get_status'].format(axis=self.DEC_CHANNEL))
+            self.CMDS['get_status'].format(axis=self.DEC_CHANNEL))
         ra_running = ra[1] % 2
         dec_running = dec[1] % 2
         return bool(ra_running + dec_running)
@@ -134,12 +135,12 @@ class GoToMount:
     @property
     def steps_per_deg(self, decimal=True):
         ra = self._decode(self._send_and_receive(
-                self.CMDS['get_steps_per_rev'].format(axis=self.RA_CHANNEL)))
+            self.CMDS['get_steps_per_rev'].format(axis=self.RA_CHANNEL)))
         dec = self._decode(self._send_and_receive(
-                self.CMDS['get_steps_per_rev'].format(axis=self.DEC_CHANNEL)))
+            self.CMDS['get_steps_per_rev'].format(axis=self.DEC_CHANNEL)))
         return(ra/360.0, dec/360.0)
 
-    def _set_motion(self, mode, orientation, axis): 
+    def _set_motion(self, mode, orientation, axis):
         cmd = self.CMDS['set_motion_mode'].format(
             axis=axis,
             motion_type=mode,
@@ -160,10 +161,11 @@ class GoToMount:
         self._set_motion(self.FAST_GOTO, self.COARSE_GOTO, axis)
         self._set_move_target(val, axis)
         self._send_and_receive(
-                self.CMDS['start_motion'].format(axis=axis))
+            self.CMDS['start_motion'].format(axis=axis))
 
     def move_relative(self, value, axis, use_degrees=True):
-        logging.debug("relative movement value:{}, axis:{}".format(value, axis))
+        logging.debug(
+            "relative movement value:{}, axis:{}".format(value, axis))
         delta = value
         ax_idx = axis - 1
         if use_degrees:
@@ -175,7 +177,7 @@ class GoToMount:
         pos = self.position[ax_idx]
         pos += delta
         self.move(int(pos), axis=axis)
-        
+
     # Not used (couldn't get this to work)
     def shutter_on(self, axis):
         self._send_and_receive(self.CMDS['aux_on'].format(axis=axis))
@@ -183,13 +185,3 @@ class GoToMount:
     # Not used (couldn't get this to work)
     def shutter_off(self, axis):
         self._send_and_receive(self.CMDS['aux_off'].format(axis=axis))
-
-
-
-
-
-
-
-
-
-

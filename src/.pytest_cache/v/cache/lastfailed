@@ -1,8 +1,0 @@
-{
-  "camera_test.py::test_get_position": true,
-  "camera_test.py::test_shutter": true,
-  "mount_test.py::test_get_steps_per_rev": true,
-  "tests/camera_test.py": true,
-  "tests/mount_test.py": true,
-  "tests/run_test.py::test_observation_campaign": true
-}

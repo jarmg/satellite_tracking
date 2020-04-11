@@ -3,12 +3,8 @@ import logging
 import os
 import subprocess
 
-from skyfield.api import load
-
 from mount import GoToMount
 from predict_passes import get_moon_pos
-
-ts = load.timescale()
 
 
 #hostname = "ESP_6DAE10.home"
@@ -26,7 +22,7 @@ class SatelliteTracker:
         self._ra_steps_per_deg = None
         self._dec_steps_per_deg = None
         self.is_calibrated = False
- 
+
     def requires_calibration(func):
         def check_calibration(*args, **kwargs):
             print("move_calib")
@@ -34,7 +30,7 @@ class SatelliteTracker:
             if self.is_calibrated:
                 func(args, kwargs)
             else:
-                raise ValueError("Camera is not calibrate")       
+                raise ValueError("Camera is not calibrate")
 
     def mount_init(self, ip=hostname, port=serial_port):
         self.mount = GoToMount(ip_address=ip, port=port)
@@ -85,43 +81,14 @@ class SatelliteTracker:
         if dec:
             self.mount.move_relative(value=dec, axis=self.mount.DEC_CHANNEL)
 
-    def take_pictures(self, file_path, exposure, count):
+    def take_pictures(self, file_path, file_name, exposure, count):
         print("capturing image")
         ret = subprocess.run([
             os.path.join(self.util_dir, "capture_images.sh"),
             str(count),
             str(exposure),
-            file_path
+            file_path,
+            file_name
         ])
         print("return of {}".format(ret))
         return file_path
-
-    def move_to_moon(camera):
-        el, az, _ = get_moon_pos()
-
-    def move_to_then_shoot(self, ra, dec, t, margin, exposure, output_dir):
-        '''
-            t: expected time of event
-            margin: buffer before and after event to image to increase our odds
-            exposure: length of the exposure
-        '''
-        
-        self.move_to(ra, dec)
-        # build the observation window (interesting:https://bit.ly/2Wz5YwC)
-        mg_dt = margin / 24 / 60 / 60
-        expsr = margin / 24 / 60 / 60
-
-        begin = ts.tt_jd(t.tt - mg_dt)
-        end = ts.tt_jd(t.tt + mg_dt)
-        imgs = int((end.tt - begin.tt) / expsr)
-        while begin.tt > ts.now().tt:
-            sec_until = (begin.tt - ts.now().tt) * 60 * 60 * 24
-            start = begin.utc_strftime('%X')
-            print("exposure of {ra}, {dec} in T-{t_m} secs at {start}"
-                  .format(ra=ra, dec=dec, t_m=sec_until, start=start))
-            time.sleep(1)
-        self.take_pictures(output_dir, exposure, imgs)
-        print("done taking images")
-
-    def move_to_moon():
-        el, az, _ = get_moon_pos()

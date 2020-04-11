@@ -2,13 +2,20 @@ import os
 import sys
 import pickle
 
-from skyfield.api import Topos, load, Loader
+from skyfield.api import Topos, Loader
+from pytz import timezone
+
+pacific = timezone('US/Pacific')
 
 ROOT_DIR = os.environ['ROOT_DIR']
 
-time_loader = Loader('./data/')
-ts = time_loader.timescale(builtin=True)
+if ROOT_DIR is None:
+    raise RuntimeError("ROOT_DIR not set")
+
+load = Loader(os.path.join(ROOT_DIR, './data/'))
+ts = load.timescale(builtin=True)
 planets = load('de421.bsp')
+
 
 def get_moon_pos():
     earth = planets['earth']
@@ -19,12 +26,13 @@ def get_moon_pos():
     apparent = loc.at(ts.now()).observe(moon).apparent()
     return apparent.altaz()
 
+
 def get_satellites(tle_file=None):
     if tle_file:
         satellites = load.tle(tle_file)
 
     else:
-        celestrak_url = 'https://celestrak.com/NORAD/elements/starlink.txt' 
+        celestrak_url = 'https://celestrak.com/NORAD/elements/starlink.txt'
         satellites = load.tle(celestrak_url)
 
     starlinks = {k: v for k, v in satellites.items() if 'STARLINK' in str(k)}
@@ -33,13 +41,14 @@ def get_satellites(tle_file=None):
 
 def _get_passes_for_sat(satellite, location, t0, t1):
     event_times, events = satellite.find_events(
-            location, t0, t1, altitude_degrees=30.0)
+        location, t0, t1, altitude_degrees=30.0)
     diff = satellite - location
 
     # 1 == pass culminated
     peaks = [event_times[i] for i in range(len(event_times)) if events[i] == 1]
 
-    ret = [(satellite.name, p, diff.at(p).altaz()) for p in peaks]
+    ret = [(satellite.name, p.astimezone(pacific), diff.at(p).altaz())
+           for p in peaks]
     return ret
 
 
@@ -71,5 +80,5 @@ def predict_passes(lat, lon, cache):
 
 if __name__ == "__main__":
     lat = '47.647654'
-    lon = '-122.324748' 
+    lon = '-122.324748'
     predict_passes(lat, lon)

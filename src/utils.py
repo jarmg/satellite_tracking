@@ -14,8 +14,7 @@ def run_jog_loop(tracker):
             print("jogging complete - hope you had fun!")
             return
         if d == 'a':
-            axis = tracker.mount.RA_CHANNEL 
+            axis = tracker.mount.RA_CHANNEL
         elif d == 'e':
             axis = tracker.mount.DEC_CHANNEL
         tracker.mount.move_relative(axis=axis, value=v, use_degrees=True)
-

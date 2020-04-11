@@ -13,10 +13,11 @@ from session_runner import Session
 
 class Robot:
     '''instance of a booted system. Should hold state between runs'''
+
     def __init__(self):
         self.tracker = SatelliteTracker()
         self.tracker.mount_init()
-        self.session = Session() 
+        self.session = Session()
         self._session_thread = None
         self._stop_event = None
 
@@ -57,4 +58,3 @@ class Robot:
         if self._session_thread is None:
             raise(RuntimeError("No session in progress"))
         self._stop_event.set()
-
