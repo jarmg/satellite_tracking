@@ -11,7 +11,7 @@ const topLevelDiv = {
   gridTemplateAreas: `
     "out1 out1 out2 out2"
     "ctrl1 ctrl2 ctrl3 ctrl4"
-    "run run run run"
+    "run run stop stop"
   `,
   gridGap: "20px",
 }
@@ -47,10 +47,10 @@ export class Controls extends Component {
 
 
   onRun = async () => 
-  {
-    const response = await fetch("/run");
-  }
+  { const response = await fetch("/run");}
 
+  onStop = async () => 
+  { const response = await fetch("/stop_run");}
 
   onJog = async (axis, multiplier) => 
   {
@@ -119,9 +119,20 @@ export class Controls extends Component {
           style={{gridArea:"run"}}
           onClick={this.onRun()}
           loading={this.state.is_jogging}
+          color="green"
         >
           Run
         </Button>
+
+        <Button
+          style={{gridArea:"stop"}}
+          onClick={this.onStop()}
+          loading={this.state.is_jogging}
+          color="red"
+        >
+          Stop
+        </Button>
+
       </div>
     )
   }

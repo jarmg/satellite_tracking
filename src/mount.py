@@ -116,8 +116,10 @@ class GoToMount:
     def position(self):
         ra = self._send_and_receive(
             self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
+        print("GOT POSITION {}".format(ra))
         dec = self._send_and_receive(
             self.CMDS['get_position'].format(axis=self.DEC_CHANNEL))
+        print("GOT POSITION {}".format(dec))
         ra_value = self._decode(ra, is_position=True)
         dec_value = self._decode(dec, is_position=True)
         return(ra_value, dec_value)

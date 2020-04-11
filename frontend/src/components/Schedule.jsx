@@ -3,12 +3,12 @@ import fetch from 'node-fetch'
 
 import { List, Button, FlexboxGrid } from 'rsuite';
 
-
+ 
 const styleCenter = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '60px'
+    height: '20px'
 };
 
 export class PassSchedule extends Component {
@@ -36,35 +36,37 @@ export class PassSchedule extends Component {
           () => this.getUpcomingPasses()}>
           Load passes 
         </Button>
-        <List>
-          {this.state.satPasses.map((pass) => (
-            <List.Item key={pass.satellite + pass.time}>
-              <FlexboxGrid>
-                <FlexboxGrid.Item style={styleCenter} colspan={6}> 
-                  {pass.satellite}
-                </FlexboxGrid.Item>
+        <div style={{padding: "10px", height: "60vh", overflow: "scroll"}}>
+          <List>
+            {this.state.satPasses.map((pass) => (
+              <List.Item>
+                <FlexboxGrid>
+                  <FlexboxGrid.Item style={styleCenter} colspan={6}> 
+                    {pass.satellite}
+                  </FlexboxGrid.Item>
 
-                <FlexboxGrid.Item style={styleCenter} colspan={6}> 
-                  {pass.time}
-                </FlexboxGrid.Item>
+                  <FlexboxGrid.Item style={styleCenter} colspan={6}> 
+                    {pass.time}
+                  </FlexboxGrid.Item>
 
-                <FlexboxGrid.Item style={styleCenter} colspan={6}> 
-                  {pass.azimuth}
-                </FlexboxGrid.Item>
+                  <FlexboxGrid.Item style={styleCenter} colspan={6}> 
+                    {pass.azimuth}
+                  </FlexboxGrid.Item>
 
-                <FlexboxGrid.Item style={styleCenter} colspan={6}> 
-                  {pass.elevation}
-                </FlexboxGrid.Item>
-            
-                <FlexboxGrid.Item style={styleCenter} colspan={6}> 
-                  {pass.range}
-                </FlexboxGrid.Item>
-
-              </FlexboxGrid>
-            </List.Item>
-          ))}
-          </List>
-      </div>
+                  <FlexboxGrid.Item style={styleCenter} colspan={6}> 
+                    {pass.elevation}
+                  </FlexboxGrid.Item>
+              
+                  <FlexboxGrid.Item style={styleCenter} colspan={6}> 
+                    {pass.range}
+                  </FlexboxGrid.Item>
+                </FlexboxGrid>
+              </List.Item>
+            ))}
+            ))}
+            </List>
+          </div>
+        </div>
     );
   }
 }

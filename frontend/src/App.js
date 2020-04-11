@@ -9,7 +9,7 @@ import 'rsuite/lib/styles/index.less';
 const rootContainer = {
   height: '100vh',
   display: "grid",
-  padding: "10px",
+  padding: "15px",
   background: "black",
   gridTemplateColumns: "150px 1fr",
   gridTemplateRows: "150px 1fr 50px",
@@ -23,6 +23,7 @@ const rootContainer = {
 const mainPanel = {
   background: 'grey',
   gridArea: 'main',
+  overflow: "scroll",
   padding: "35px",
   borderRadius: "5px",
 }

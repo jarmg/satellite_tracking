@@ -8,16 +8,16 @@ from pytz import timezone
 
 
 import predict_passes as predict
-from robot import Robot 
+from robot import Robot
 
 app = Flask("__main__")
 CORS(app)
 
 ROOT_DIR = os.environ['ROOT_DIR']
 IMAGE_DIR = os.environ['IMAGE_OUTPUT_DIR']
-DATA_DIR = os.path.join(ROOT_DIR, 'data')                                  
+DATA_DIR = os.path.join(ROOT_DIR, 'data')
 
-robot = Robot() # Singleton for the system
+robot = Robot()  # Singleton for the system
 
 
 def get_timestamp(tt):
@@ -26,12 +26,12 @@ def get_timestamp(tt):
 
 def format_passes_as_json(passes):
     pass_data = [{
-            'satellite': sat,
-            'time': get_timestamp(ts),
-            'elevation': "{:.2f} deg".format(elev.degrees),
-            'azimuth': "{:.2f} deg".format(az.degrees),
-            'range': "{:.2f} km".format(rng.km)
-        } for sat, ts, (elev, az, rng) in passes]
+        'satellite': sat,
+        'time': get_timestamp(ts),
+        'elevation': "{:.2f} deg".format(elev.degrees),
+        'azimuth': "{:.2f} deg".format(az.degrees),
+        'range': "{:.2f} km".format(rng.km)
+    } for sat, ts, (elev, az, rng) in passes]
     return json.dumps(pass_data)
 
 
@@ -76,11 +76,21 @@ def jog():
     return "Tracker moved", 200
 
 
-#@app.route('/run')
+@app.route('/run')
 def run():
-    robot.calibrate(0, 0) # FIX THIS
-    robot.start_session()
-    return "Session starting", 200
+    robot.calibrate(0, 0)  # FIX THIS
+    session_id = robot.start_session()
+    if session_id > 0:
+        return "Session starting", 200
+    else:
+        return "Failed to start session - maybe one is already running", 500
+
+
+@app.route('/stop_run')
+def stop_run():
+    print("received!")
+    robot.stop_session()
+    return "Session stopped", 200
 
 
 @app.route('/upcoming_passes')
@@ -89,14 +99,14 @@ def get_upcoming_passes():
         (SAT_NAME, time, (el, az, rng))
     '''
     return Response(
-            format_passes_as_json(robot.session.passes),
-            mimetype='application/json')
+        format_passes_as_json(robot.session.passes),
+        mimetype='application/json')
 
 
 @app.route('/tle', methods=['GET', 'POST'])
 def upload_tle():
     if request.method == 'POST':
-        file = request.files['file'] 
+        file = request.files['file']
         file.save('/data/tle_data.txt')
     if request.method == 'GET':
         tles = open('/data/tle_data.txt')
