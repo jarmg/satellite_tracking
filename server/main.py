@@ -21,8 +21,7 @@ robot = Robot() # Singleton for the system
 
 
 def get_timestamp(tt):
-    tz_pst = timezone('US/Pacific')
-    return tt.utc_datetime().astimezone(tz_pst).strftime("%X %Z %x")
+    return tt.strftime("%X %Z %x")
 
 
 def format_passes_as_json(passes):
@@ -46,7 +45,7 @@ def generate_pass_predictions():
     # TODO jarmg: take parameters
     lat = '47.647654'
     lon = '-122.324748'
-    passes = predict.predict_passes(lat, lon)
+    passes = predict.predict_passes(lat, lon, cache=False)
     return Response(format_passes_as_json(passes), mimetype='application/json')
 
 
@@ -72,13 +71,16 @@ def jog():
     az = int(request.args.get('azimuth'))
     el = int(request.args.get('elevation'))
     print("Jogging: az={}, el={}".format(az, el))
-    return robot.tracker.move_relative(ra=az, dec=el)
+    ret = robot.tracker.move_relative(ra=az, dec=el)
+    robot.tracker.wait_for_move()
+    return "Tracker moved", 200
 
 
-@app.route('/run')
+#@app.route('/run')
 def run():
     robot.calibrate(0, 0) # FIX THIS
     robot.start_session()
+    return "Session starting", 200
 
 
 @app.route('/upcoming_passes')

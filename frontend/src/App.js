@@ -2,12 +2,15 @@ import React from 'react';
 import { ImageViewer } from './components/ImageViewer.jsx';
 import { PassSchedule } from './components/Schedule.jsx';
 import { Controls } from './components/Controls.jsx';
+import { NavBar } from './components/Navigation.jsx';
 
 import 'rsuite/lib/styles/index.less';
 
 const rootContainer = {
   height: '100vh',
   display: "grid",
+  padding: "10px",
+  background: "black",
   gridTemplateColumns: "150px 1fr",
   gridTemplateRows: "150px 1fr 50px",
   gridGap: "10px",
@@ -20,41 +23,56 @@ const rootContainer = {
 const mainPanel = {
   background: 'grey',
   gridArea: 'main',
+  padding: "35px",
+  borderRadius: "5px",
 }
 
 const navPanel = {
   background: 'purple',
   gridArea: 'nav',
+  borderRadius: "5px",
 }
 
 const headerPanel = {
   background: 'pink',
   gridArea: 'head',
+  borderRadius: "5px",
 }
 
 const footerPanel = {
   background: 'blue',
   gridArea: 'footer',
+  borderRadius: "5px",
+}
+
+const screens = {
+  CONTROLS: "controls",
+  PASSES: "upcoming_passes",
+  IMAGES: "images"
 }
 
 class App extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      main_screen: 'control'
+      main_screen: screens.CONTROLS
     }
   }
-  
+
   pickScreen = () => {
     switch(this.state.main_screen){
-      case 'control':
+      case screens.CONTROLS:
         return <Controls />;
-      case 'upcoming_passes':
+      case screens.PASSES:
         return <PassSchedule />;
-      case 'images':
+      case screens.IMAGES:
         return <ImageViewer/>;
     }}
 
+  setScreen = key => {
+    console.log("received " + key); 
+    this.setState({main_screen: key})
+  }
 
   render(){
     return (
@@ -65,6 +83,10 @@ class App extends React.Component {
           {this.pickScreen()}
         </div>
         <div style={navPanel}>
+          <NavBar 
+            screens={screens}
+            setScreen={this.setScreen}
+          />
         </div>
         <div style={footerPanel}>
         </div>
