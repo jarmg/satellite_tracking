@@ -1,10 +1,12 @@
 import React from 'react';
+import { w3cwebsocket as W3CWebSocket } from "websocket";
+
 import { ImageViewer } from './components/ImageViewer.jsx';
 import { PassSchedule } from './components/Schedule.jsx';
 import { Controls } from './components/Controls.jsx';
 import { NavBar } from './components/Navigation.jsx';
 
-import 'rsuite/lib/styles/index.less';
+const client = new W3CWebSocket('ws://localhost:80');
 
 const rootContainer = {
   height: '100vh',
