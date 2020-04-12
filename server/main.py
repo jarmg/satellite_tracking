@@ -5,13 +5,16 @@ import os
 import pickle
 from datetime import datetime
 from pytz import timezone
-
+from flask_socketio import SocketIO
 
 import predict_passes as predict
 from robot import Robot
 
 app = Flask("__main__")
 CORS(app)
+
+socketio = SocketIO(app)
+
 
 ROOT_DIR = os.environ['ROOT_DIR']
 IMAGE_DIR = os.environ['IMAGE_OUTPUT_DIR']
@@ -114,4 +117,4 @@ def upload_tle():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    socketio.run(app, host='0.0.0.0', port=80)
