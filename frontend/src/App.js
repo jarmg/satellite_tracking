@@ -1,12 +1,15 @@
 import React from 'react';
-import { w3cwebsocket as W3CWebSocket } from "websocket";
+import io from 'socket.io-client';
 
 import { ImageViewer } from './components/ImageViewer.jsx';
 import { PassSchedule } from './components/Schedule.jsx';
-import { Controls } from './components/Controls.jsx';
+import Controls from './containers/SystemControl';
 import { NavBar } from './components/Navigation.jsx';
 
-const client = new W3CWebSocket('ws://localhost:80');
+var socket = io();
+socket.on('connect', function() {
+    socket.emit('my event', {data: 'I\'m connected!'});
+});
 
 const rootContainer = {
   height: '100vh',
@@ -65,7 +68,7 @@ class App extends React.Component {
   pickScreen = () => {
     switch(this.state.main_screen){
       case screens.CONTROLS:
-        return <Controls />;
+        return <Controls socket={socket}/>;
       case screens.PASSES:
         return <PassSchedule />;
       case screens.IMAGES:

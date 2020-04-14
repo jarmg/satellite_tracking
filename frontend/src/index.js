@@ -1,15 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import { createStore, applyMiddleware } from 'redux'
+import thunk from 'redux-thunk'
+import { Provider } from 'react-redux'
+
 import App from './App';
+import robot from './reducers'
 import * as serviceWorker from './serviceWorker';
+
+import './index.css';
 import 'rsuite/dist/styles/rsuite-default.css';
 
+const store = createStore(robot, applyMiddleware(thunk))
+
+const unsubscribe = store.subscribe(() =>
+  console.log(store.getState()))
 
 ReactDOM.render(
-  <React.StrictMode>
+  <Provider store={store}>
     <App />
-  </React.StrictMode>,
+  </Provider>,
   document.getElementById('root')
 );
 

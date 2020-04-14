@@ -1,8 +1,11 @@
 import fetch from 'node-fetch'
 import React, { Component } from 'react'
 import { Button } from 'rsuite';
+import PropTypes from 'prop-types'
 
-const topLevelDiv = {
+
+const topLevelDiv = 
+{
   display:"grid",
   height: "100%",
   width: "100%",
@@ -35,81 +38,38 @@ const leftControl = {gridArea:'left'}
 const rightControl = {gridArea:'right'}
 
 
-export class Controls extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      distance: 10,
-      is_jogging: false,
-      is_running: false,
-    }
-  }
-
-
-  onRun = async () => 
-  { const response = await fetch("/run");}
-
-  onStop = async () => 
-  { const response = await fetch("/stop_run");}
-
-  onJog = async (axis, multiplier) => 
-  {
-
-    this.setState({ready:false})
-    const value = this.state.distance * multiplier
-    var base = "/jog?azimuth="
-    var query = ''
-    if (axis == 'az')
-    {
-      query = base.concat(value, "&elevation=", 0)
-    }
-    if (axis == 'el')
-    {
-      query = base.concat(0, "&elevation=", value)
-    }
-    this.setState({is_jogging: true})
-    const response = await fetch(query);
-    console.log("done")
-    this.setState({is_jogging: false})
-  }
-
-  onPick = image => 
-  {
-    this.setState({image})
-  }
-
-  render() {
+const Controls = ({ jogging, onRun, onJog }) => {
     return (
       <div style={topLevelDiv}>
         <div style={arrows}>
           <Button 
             style={leftControl}
-            onClick={() => this.onJog('az', -1)}
-            loading={this.state.is_jogging}
+            onClick={() => onJog('az')}
+            loading={jogging}
           >
               ← 
           </Button>
 
           <Button 
             style={rightControl}
-            onClick={() => this.onJog('az', 1)}
-            loading={this.state.is_jogging}
+            onClick={() => onJog('az')}
+            loading={jogging}
           >
              → 
           </Button>
 
           <Button
             style={upControl}
-            onClick={() => this.onJog('el', 1)}
-            loading={this.state.is_jogging}
+            onClick={() => onJog('el')}
+            loading={jogging}
           >
              ↑ 
           </Button>
 
           <Button
             style={downControl}
-            onClick={() => this.onJog('el', -1)}
-            loading={this.state.is_jogging}
+            onClick={() => onJog('el')}
+            loading={jogging}
           >
             ↓
           </Button>
@@ -117,8 +77,8 @@ export class Controls extends Component {
 
         <Button
           style={{gridArea:"run"}}
-          onClick={this.onRun()}
-          loading={this.state.is_jogging}
+          onClick={onRun}
+          loading={jogging}
           color="green"
         >
           Run
@@ -126,8 +86,7 @@ export class Controls extends Component {
 
         <Button
           style={{gridArea:"stop"}}
-          onClick={this.onStop()}
-          loading={this.state.is_jogging}
+          loading={jogging}
           color="red"
         >
           Stop
@@ -135,5 +94,13 @@ export class Controls extends Component {
 
       </div>
     )
-  }
+
 }
+
+Controls.propTypes = {
+  jogging: PropTypes.bool.isRequired,
+  onJog: PropTypes.func.isRequired,
+  onRun: PropTypes.func.isRequired
+}
+
+export default Controls

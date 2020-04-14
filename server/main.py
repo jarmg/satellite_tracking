@@ -11,7 +11,7 @@ import predict_passes as predict
 from robot import Robot
 
 app = Flask("__main__")
-CORS(app)
+# CORS(app)
 
 socketio = SocketIO(app)
 
@@ -64,13 +64,18 @@ def get_observation_file_list():
     return Response(json.dumps(images), mimetype='application/json')
 
 
-@app.route('/status')
-def show_status():
-    pass
+@socketio.on('get_status')
+def get_status(status_request):
+    print('received a status request')
 
+@socketio.on('connect')
+def on_connect():
+    print("received connection")
 
-@app.route('/jog')
-def jog():
+@socketio.on('jog_message')
+def jog(jog_data):
+    print("jarmg found a jog message!")
+    print(jog_data)
     az = int(request.args.get('azimuth'))
     el = int(request.args.get('elevation'))
     print("Jogging: az={}, el={}".format(az, el))
@@ -79,7 +84,7 @@ def jog():
     return "Tracker moved", 200
 
 
-@app.route('/run')
+#@app.route('/run')
 def run():
     robot.calibrate(0, 0)  # FIX THIS
     session_id = robot.start_session()
@@ -89,7 +94,7 @@ def run():
         return "Failed to start session - maybe one is already running", 500
 
 
-@app.route('/stop_run')
+#@app.route('/stop_run')
 def stop_run():
     print("received!")
     robot.stop_session()
