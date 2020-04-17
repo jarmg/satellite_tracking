@@ -1,15 +1,10 @@
 import React from 'react';
-import io from 'socket.io-client';
 
 import { ImageViewer } from './components/ImageViewer.jsx';
 import { PassSchedule } from './components/Schedule.jsx';
 import Controls from './containers/SystemControl';
 import { NavBar } from './components/Navigation.jsx';
 
-var socket = io();
-socket.on('connect', function() {
-    socket.emit('my event', {data: 'I\'m connected!'});
-});
 
 const rootContainer = {
   height: '100vh',
@@ -68,7 +63,7 @@ class App extends React.Component {
   pickScreen = () => {
     switch(this.state.main_screen){
       case screens.CONTROLS:
-        return <Controls socket={socket}/>;
+        return <Controls/>;
       case screens.PASSES:
         return <PassSchedule />;
       case screens.IMAGES:

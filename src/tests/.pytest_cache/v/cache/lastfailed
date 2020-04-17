@@ -1,0 +1,4 @@
+{
+  "mount_test.py::test_get_wifi_info": true,
+  "mount_test.py::test_set_wifi_info": true
+}

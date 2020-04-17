@@ -72,3 +72,14 @@ def test_relative_movement():
         time.sleep(.1)
     m.move_relative(val=-target, axis=m.DEC_CHANNEL, use_degrees=True)
 
+def test_get_wifi_info():
+    m = mt.GoToMount()
+    assert(bytes(m.CMDS['get_wifi_info'], encoding='ascii').hex() == '41542b43574a41505f4445463f0d0a') 
+    ret = m.get_wifi()
+    assert ret == 'j'
+
+def test_set_wifi_info():
+    m = mt.GoToMount(ip_address="192.168.43.141")
+    # ret = m.set_wifi(ssid="jgwifi", password="jmg12345")
+    ret = m.set_wifi(ssid="CenturyLink6635", password="full greene ahead")
+    assert ret == 'j'

@@ -16,6 +16,8 @@ class GoToMount:
     COARSE_GOTO = 4
 
     CMDS = {
+
+        # motor controller communication
         'get_steps_per_rev': ':a{axis}\r',
         'get_position': ':j{axis}\r',
         'get_status': ':f{axis}\r',
@@ -26,7 +28,15 @@ class GoToMount:
         'set_motion_mode': ':G{axis}{motion_type}{motion_orientation}\r',
         'set_goto_target': ':S{axis}{target}\r',
         'aux_on': ':O1{axis}\r',
-        'aux_off': 'O0{axis}\r'
+        'aux_off': 'O0{axis}\r',
+
+        # networking commands (all had to be packet sniffed)
+        'set_wifi': 'AT+CWJAP_DEF="{ssid}","{pwd}"\r\n',
+        'get_dhcp_info': 'AT+CWDHCP_DEF?\r\n',
+        'get_network_mode': 'AT+CWMODE_CUR?\r\n',
+        'get_network_info': 'AT+CIPSTA_CUR?\r\n',
+        'get_ap_info': 'AT+CWSAP_CUR?\r\n',
+        'get_wifi_info': 'AT+CWJAP_DEF?\r\n'
     }
 
     # TODO: May need to lock this if we see issues between client requests
@@ -34,18 +44,24 @@ class GoToMount:
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._ip_address = ip_address
         self._port = port
-        self._socket.settimeout(5)
+        self._socket.settimeout(4)
 
-    def _send_and_receive(self, msg):
+    def _send(self, msg):
         logging.debug("sending msg'{}".format(repr(msg)))
+        self._socket.sendto(
+            bytes(msg, encoding='ascii'), (self._ip_address, self._port))
+
+    def _send_and_rcv(self, msg, is_motor_msg):
+        self._send(msg)
+        return self._socket.recvfrom(1024)[0]
+
+    def _send_and_rcv_with_retry(self, msg, is_motor_msg=True):
         retry = True
         retry_count = 0
         retry_max = 20
         while(retry):
             try:
-                self._socket.sendto(
-                    bytes(msg, encoding='ascii'), (self._ip_address, self._port))
-                ret = self._socket.recvfrom(1024)[0]
+                ret = self._send_and_rcv(msg, is_motor_msg)
                 retry = False
             except socket.timeout:
                 print("retry # {}".format(retry_count))
@@ -57,12 +73,14 @@ class GoToMount:
 
         if b"!" in ret:
             raise ValueError('Motor controller error: {}'.format(ret))
-        return ret[1:-1]  # strip '=' and '\r'
+        if is_motor_msg:
+            return ret[1:-1]  # strip '=' and '\r'
+        return ret
 
     def _stream_position(self, seconds):
         start = time.time()
         while (time.time() < start + seconds):
-            ra = self._send_and_receive(
+            ra = self._send_and_rcv_with_retry(
                 self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
             val = self._decode(ra, is_position=True)
             print("raw: {ra}, decoded: {val}".format(ra=ra, val=val))
@@ -102,11 +120,11 @@ class GoToMount:
 
     @property
     def target(self):
-        ra = self._decode(self._send_and_receive(
+        ra = self._decode(self._send_and_rcv_with_retry(
             self.CMDS['get_goto_target'].format(axis=self.RA_CHANNEL)),
             is_position=True
         )
-        dec = self._decode(self._send_and_receive(
+        dec = self._decode(self._send_and_rcv_with_retry(
             self.CMDS['get_goto_target'].format(axis=self.DEC_CHANNEL)),
             is_position=True
         )
@@ -114,10 +132,10 @@ class GoToMount:
 
     @property
     def position(self):
-        ra = self._send_and_receive(
+        ra = self._send_and_rcv_with_retry(
             self.CMDS['get_position'].format(axis=self.RA_CHANNEL))
         print("GOT POSITION {}".format(ra))
-        dec = self._send_and_receive(
+        dec = self._send_and_rcv_with_retry(
             self.CMDS['get_position'].format(axis=self.DEC_CHANNEL))
         print("GOT POSITION {}".format(dec))
         ra_value = self._decode(ra, is_position=True)
@@ -126,9 +144,9 @@ class GoToMount:
 
     @property
     def is_moving(self):
-        ra = self._send_and_receive(
+        ra = self._send_and_rcv_with_retry(
             self.CMDS['get_status'].format(axis=self.RA_CHANNEL))
-        dec = self._send_and_receive(
+        dec = self._send_and_rcv_with_retry(
             self.CMDS['get_status'].format(axis=self.DEC_CHANNEL))
         ra_running = ra[1] % 2
         dec_running = dec[1] % 2
@@ -136,11 +154,44 @@ class GoToMount:
 
     @property
     def steps_per_deg(self, decimal=True):
-        ra = self._decode(self._send_and_receive(
+        ra = self._decode(self._send_and_rcv_with_retry(
             self.CMDS['get_steps_per_rev'].format(axis=self.RA_CHANNEL)))
-        dec = self._decode(self._send_and_receive(
+        dec = self._decode(self._send_and_rcv_with_retry(
             self.CMDS['get_steps_per_rev'].format(axis=self.DEC_CHANNEL)))
         return(ra/360.0, dec/360.0)
+
+    def set_wifi(self, ssid, password, timeout=20):
+        msg = self.CMDS['set_wifi'].format(ssid=ssid, pwd=password)
+        self._send(msg) # no ack for set wifi
+
+        # send until we lose connection
+        end = time.time() + timeout
+        while(time.time() < end):
+            try:
+                self._send_and_rcv(
+                    self.CMDS['get_status'].format(axis=self.RA_CHANNEL), is_motor_msg=True)
+                self._send(msg)
+            except socket.timeout:
+                return
+
+
+        
+    def get_wifi(self) -> (str, str):
+        '''example return:
+            b'+CWJAP_DEF:"CenturyLink6635","70:f2:20:61:9e:a3",11,-72\r\n\r\nOK\r\n'
+        '''
+        msg = self.CMDS['get_wifi_info']
+        ret = self._send_and_rcv_with_retry(msg, is_motor_msg=False) # Note: no receive because wifi setting doesn't return an ack
+        try:
+            ssid, mac, channel, _ = str(ret).split(',')
+            ssid = ssid.split('CWJAP_DEF:')[1] 
+        except IndexError:
+            raise ValueError("Invalid wifi response format: {}".format(ret))
+
+
+        # strip quotation marks and return
+        return ssid[1:-1], mac[1:-1] 
+        
 
     def _set_motion(self, mode, orientation, axis):
         cmd = self.CMDS['set_motion_mode'].format(
@@ -148,21 +199,21 @@ class GoToMount:
             motion_type=mode,
             motion_orientation=orientation
         )
-        self._send_and_receive(cmd)
+        self._send_and_rcv_with_retry(cmd)
 
     def _set_move_target(self, target, axis):
         val = self._encode(target, is_position=True)
         cmd = self.CMDS['set_goto_target'].format(axis=axis, target=val)
-        self._send_and_receive(cmd)
+        self._send_and_rcv_with_retry(cmd)
 
     def stop(self, axis):
         cmd = self.CMDS['stop_motion'].format(axis=axis)
-        self._send_and_receive(cmd)
+        self._send_and_rcv_with_retry(cmd)
 
     def move(self, val, axis):
         self._set_motion(self.FAST_GOTO, self.COARSE_GOTO, axis)
         self._set_move_target(val, axis)
-        self._send_and_receive(
+        self._send_and_rcv_with_retry(
             self.CMDS['start_motion'].format(axis=axis))
 
     def move_relative(self, value, axis, use_degrees=True):
@@ -182,8 +233,8 @@ class GoToMount:
 
     # Not used (couldn't get this to work)
     def shutter_on(self, axis):
-        self._send_and_receive(self.CMDS['aux_on'].format(axis=axis))
+        self._send_and_rcv_with_retry(self.CMDS['aux_on'].format(axis=axis))
 
     # Not used (couldn't get this to work)
     def shutter_off(self, axis):
-        self._send_and_receive(self.CMDS['aux_off'].format(axis=axis))
+        self._send_and_rcv_with_retry(self.CMDS['aux_off'].format(axis=axis))

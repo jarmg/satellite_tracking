@@ -32,6 +32,9 @@ const arrows = {
   gridTemplateAreas: `"c1 up c2" "left down right"`
 }
 
+const AZ = 0
+const EL = 1
+
 const upControl = {gridArea:'up'}
 const downControl = {gridArea:'down'}
 const leftControl = {gridArea:'left'}
@@ -44,7 +47,7 @@ const Controls = ({ jogging, onRun, onJog }) => {
         <div style={arrows}>
           <Button 
             style={leftControl}
-            onClick={() => onJog('az')}
+            onClick={() => onJog(AZ)}
             loading={jogging}
           >
               ← 
@@ -52,7 +55,7 @@ const Controls = ({ jogging, onRun, onJog }) => {
 
           <Button 
             style={rightControl}
-            onClick={() => onJog('az')}
+            onClick={() => onJog(AZ)}
             loading={jogging}
           >
              → 
@@ -60,7 +63,7 @@ const Controls = ({ jogging, onRun, onJog }) => {
 
           <Button
             style={upControl}
-            onClick={() => onJog('el')}
+            onClick={() => onJog(EL)}
             loading={jogging}
           >
              ↑ 
@@ -68,7 +71,7 @@ const Controls = ({ jogging, onRun, onJog }) => {
 
           <Button
             style={downControl}
-            onClick={() => onJog('el')}
+            onClick={() => onJog(EL)}
             loading={jogging}
           >
             ↓

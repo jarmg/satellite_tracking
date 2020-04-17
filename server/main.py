@@ -5,10 +5,11 @@ import os
 import pickle
 from datetime import datetime
 from pytz import timezone
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 
 import predict_passes as predict
 from robot import Robot
+from utils import is_mount_available
 
 app = Flask("__main__")
 # CORS(app)
@@ -25,7 +26,6 @@ robot = Robot()  # Singleton for the system
 
 def get_timestamp(tt):
     return tt.strftime("%X %Z %x")
-
 
 def format_passes_as_json(passes):
     pass_data = [{
@@ -63,28 +63,29 @@ def get_observation_file_list():
 
     return Response(json.dumps(images), mimetype='application/json')
 
-
-@socketio.on('get_status')
-def get_status(status_request):
+@socketio.on('get_system_status')
+def get_status():
     print('received a status request')
+    emit('system_status', json.dumps({'mount_connected': is_mount_available()}))
 
 @socketio.on('connect')
 def on_connect():
     print("received connection")
 
-@socketio.on('jog_message')
+@socketio.on('JOG_MOUNT')
 def jog(jog_data):
-    print("jarmg found a jog message!")
-    print(jog_data)
-    az = int(request.args.get('azimuth'))
-    el = int(request.args.get('elevation'))
-    print("Jogging: az={}, el={}".format(az, el))
-    ret = robot.tracker.move_relative(ra=az, dec=el)
+    ax = int(jog_data['axis'])
+    val = int(jog_data['value'])
+    print("Jogging: axis={}, distance={}".format(ax, val))
+    if ax == 0:
+        ret = robot.tracker.move_relative(ra=val, dec=0)
+    if ax == 1:
+        ret = robot.tracker.move_relative(ra=0, dec=val)
     robot.tracker.wait_for_move()
-    return "Tracker moved", 200
+    emit('done_jogging')
 
 
-#@app.route('/run')
+@socketio.on('run')
 def run():
     robot.calibrate(0, 0)  # FIX THIS
     session_id = robot.start_session()
